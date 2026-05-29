@@ -26,7 +26,7 @@ def get_llm() -> BaseChatModel:
                 [AIMessage(content="This is a mock response for CI testing.")]
             )
         )
-    return ChatOllama(model=CHAT_MODEL, temperature=0.2, base_url=OLLAMA_BASE_URL)
+    return ChatOllama(model=CHAT_MODEL, temperature=0, base_url=OLLAMA_BASE_URL)
 
 
 T = TypeVar("T", bound=BaseModel)

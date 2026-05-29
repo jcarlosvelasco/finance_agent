@@ -1,12 +1,10 @@
 SENTIMENT_PROMPT = """Analyze the sentiment of these news headlines about {company}.
-Classify as: positive | negative | neutral | mixed.
-Also identify the top 3 most significant events mentioned.
 
 Headlines:
 {headlines}
 
-Respond with JSON:
-{{"sentiment": "...", "key_events": ["...", "...", "..."]}}"""
+Respond ONLY with this exact JSON, no other text:
+{{"sentiment": "positive|negative|neutral|mixed", "key_events": ["event1", "event2", "event3"]}}"""
 
 REPORT_PROMPT = """You are a financial analyst. Generate a comprehensive company report based on the following data:
 
