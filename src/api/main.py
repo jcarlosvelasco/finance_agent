@@ -31,7 +31,7 @@ async def generate_report(req: GenerateReportRequest = Depends()):
     cached = load_cached_report(ticker)
     if cached:
         logger.info(f"Cache hit for {ticker}")
-        return {"success": True, "report": cached}
+        return {"success": True, "report": cached["report"]}
 
     app = graph.compile()
     result = await app.ainvoke(
