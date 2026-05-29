@@ -3,3 +3,5 @@ yfinance
 langgraph
 langchain_ollama
 tavily
+langfuse==3.6.0
+langfuse-langchain==2.60.10.1

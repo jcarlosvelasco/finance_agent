@@ -1,8 +1,10 @@
 from src.graph.state import AnalysisState, CompanyInfo
+from src.langfuse import langfuse
 from src.nodes.prompts import REPORT_PROMPT
 from src.shared.llm import get_llm
 
 llm = get_llm()
+trace = langfuse.trace(name="reports_node")
 
 
 async def report(state: AnalysisState) -> AnalysisState:
@@ -38,7 +40,12 @@ async def report(state: AnalysisState) -> AnalysisState:
             key_events=key_events_str,
         )
 
+        span = trace.span(name="llm_report", input={"prompt": prompt})
+
         response = await llm.ainvoke(prompt)
+
+        span.end(output=response.content)
+        langfuse.flush()
 
         content = response.content
         if isinstance(content, list):

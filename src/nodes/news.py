@@ -7,6 +7,7 @@ from langchain_core.messages import HumanMessage
 from tavily import TavilyClient
 
 from src.graph.state import AnalysisState
+from src.langfuse import langfuse
 from src.nodes.prompts import SENTIMENT_PROMPT
 from src.shared.llm import SentimentResponse, get_llm
 
@@ -17,6 +18,8 @@ tavily = TavilyClient(api_key=tavily_api_key)
 logger = logging.getLogger(__name__)
 
 llm = get_llm()
+
+trace = langfuse.trace(name="news_node")
 
 
 def extract_json(text: str) -> dict:
@@ -37,12 +40,31 @@ def extract_json(text: str) -> dict:
 
 async def news(state: AnalysisState) -> AnalysisState:
     try:
+        span = trace.span(
+            name="tavily_search",
+            input={
+                "query": f"{state['ticker']} {state.get('company_name', '')} stock news"
+            },
+        )
+
         results = tavily.search(
             query=f"{state['ticker']} {state.get('company_name', '')} stock news",
             max_results=8,
             topic="news",
         )
+
+        span.end(output=results)
+        langfuse.flush()
+
         headlines = [r["title"] for r in results["results"]]
+
+        span = trace.span(
+            name="llm_sentiment",
+            input={
+                "company": state.get("company_name", state["ticker"]),
+                "headlines": "\n".join(headlines),
+            },
+        )
 
         response = await llm.ainvoke(
             [
@@ -54,6 +76,9 @@ async def news(state: AnalysisState) -> AnalysisState:
                 )
             ]
         )
+
+        span.end(output=response.content)
+        langfuse.flush()
 
         logger.info(f"Raw LLM response: {response.content}")
 

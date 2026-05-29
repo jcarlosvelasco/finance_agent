@@ -1,7 +1,9 @@
+import asyncio
 import logging
 import os
 
 from src.graph.state import AnalysisState, CompanyInfo
+from src.langfuse import langfuse
 from src.shared.llm import get_llm
 from src.tools.yfinance_tools import get_financials, get_stock_info
 
@@ -15,9 +17,23 @@ agent = llm.bind_tools(tools)
 
 
 async def fundamentals(state: AnalysisState) -> AnalysisState:
+    trace = langfuse.trace(name="fundamentals_node")
+
     try:
-        stock_info = await get_stock_info.ainvoke(state["ticker"])
-        financials = await get_financials.ainvoke(state["ticker"])
+        ticker = state["ticker"]
+
+        stock_span = trace.span(name="get_stock_info", input={"ticker": ticker})
+        financials_span = trace.span(name="get_financials", input={"ticker": ticker})
+
+        stock_task = get_stock_info.ainvoke(ticker)
+        financials_task = get_financials.ainvoke(ticker)
+
+        stock_info, financials = await asyncio.gather(stock_task, financials_task)
+
+        stock_span.end(output=stock_info)
+        financials_span.end(output=financials)
+
+        langfuse.flush()
 
         company_info = CompanyInfo(
             name=stock_info.name,
