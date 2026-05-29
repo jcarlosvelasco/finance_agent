@@ -10,3 +10,4 @@ wheels/
 .venv
 
 arch.txt
+.env

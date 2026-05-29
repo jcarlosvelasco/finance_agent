@@ -19,7 +19,7 @@ Respond with JSON:
 {{"sentiment": "...", "key_events": ["...", "...", "..."]}}"""
 
 
-async def run(state: AnalysisState) -> dict:
+async def run(state: AnalysisState) -> AnalysisState:
     try:
         results = tavily.search(
             query=f"{state['ticker']} {state.get('company_name', '')} stock news",

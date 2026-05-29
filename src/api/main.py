@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from api.schemas.GenerateReportRequest import GenerateReportRequest
+from src.api.schemas.GenerateReportRequest import GenerateReportRequest
 from src.graph.graph import graph
 
 logging.basicConfig(
