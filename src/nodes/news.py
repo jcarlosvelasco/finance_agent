@@ -78,9 +78,9 @@ async def news(state: AnalysisState) -> AnalysisState:
             ]
         )
 
-        span.end(output=response.content)
-
         data = extract_json(response.content)
+        span.end(output=data)
+
         analysis = SentimentResponse.model_validate(data)
 
         return {
