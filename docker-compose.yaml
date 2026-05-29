@@ -54,13 +54,6 @@ services:
     depends_on:
       - langfuse-server
 
-  cleanup:
-    build: ./
-    command: python -m src.jobs.cleanup_reports
-    restart: always
-    volumes:
-      - reports_data:/app/src/data/reports
-
 volumes:
   database_data:
   reports_data:
