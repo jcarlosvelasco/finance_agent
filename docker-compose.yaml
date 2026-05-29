@@ -48,8 +48,12 @@ services:
     ports:
       - "8000:8000"
 
+    volumes:
+      - ./reports:/app/reports
+
     depends_on:
       - langfuse-server
 
 volumes:
   database_data:
+  reports:

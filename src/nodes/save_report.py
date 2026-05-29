@@ -5,18 +5,24 @@ from pathlib import Path
 
 from src.graph.state import AnalysisState
 
-REPORTS_DIR = Path("reports")
 logger = logging.getLogger(__name__)
 
 
 def get_cache_path(ticker: str) -> Path:
     today = date.today().isoformat()
-    REPORTS_DIR.mkdir(exist_ok=True)
-    return REPORTS_DIR / f"{ticker.upper()}_{today}.json"
+    current_dir = Path(__file__).parent.parent
+    reports_dir = current_dir / "data" / "reports"
+
+    if not reports_dir.exists():
+        reports_dir.mkdir(parents=True, exist_ok=True)
+
+    docs_path = reports_dir / f"{ticker.upper()}_{today}.json"
+    return docs_path
 
 
 def load_cached_report(ticker: str) -> dict | None:
     path = get_cache_path(ticker)
+
     if path.exists():
         return json.loads(path.read_text(encoding="utf-8"))
     return None
