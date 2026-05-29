@@ -16,17 +16,16 @@ tavily_api_key = os.getenv("TAVILY_API_KEY")
 tavily = TavilyClient(api_key=tavily_api_key)
 logger = logging.getLogger(__name__)
 
-llm = get_llm()  # LLM normal, sin with_structured_output
+llm = get_llm()
 
 
 def extract_json(text: str) -> dict:
     """Extrae JSON de la respuesta aunque venga con texto alrededor."""
-    # Intenta parsear directo
     try:
         return json.loads(text)
     except json.JSONDecodeError:
         pass
-    # Busca un bloque JSON en el texto
+
     match = re.search(r"\{.*\}", text, re.DOTALL)
     if match:
         try:

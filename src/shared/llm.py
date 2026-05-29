@@ -1,5 +1,4 @@
 import os
-from typing import Type, TypeVar
 
 from langchain_core.language_models import BaseChatModel
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
@@ -27,11 +26,3 @@ def get_llm() -> BaseChatModel:
             )
         )
     return ChatOllama(model=CHAT_MODEL, temperature=0, base_url=OLLAMA_BASE_URL)
-
-
-T = TypeVar("T", bound=BaseModel)
-
-
-def get_structured_llm(schema: Type[T]):
-    llm = get_llm()
-    return llm.with_structured_output(schema)
