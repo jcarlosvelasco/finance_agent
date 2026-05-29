@@ -1,7 +1,7 @@
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 
 from src.api.schemas.GenerateReportRequest import GenerateReportRequest
 from src.graph.graph import graph
@@ -25,7 +25,7 @@ app = FastAPI(lifespan=lifespan)
 
 
 @app.get("/generate_report")
-async def generate_report(req: GenerateReportRequest):
+async def generate_report(req: GenerateReportRequest = Depends()):
     ticker = req.ticker.upper()
 
     cached = load_cached_report(ticker)
