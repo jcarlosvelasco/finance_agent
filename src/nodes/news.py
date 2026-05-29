@@ -8,7 +8,7 @@ from tavily import TavilyClient
 
 from src.graph.state import AnalysisState
 from src.nodes.prompts import SENTIMENT_PROMPT
-from src.shared.llm import SentimentResponse, get_llm, get_structured_llm
+from src.shared.llm import SentimentResponse, get_llm
 
 tavily_api_key = os.getenv("TAVILY_API_KEY")
 

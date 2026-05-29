@@ -6,6 +6,7 @@ from src.graph.state import AnalysisState
 from src.nodes.fundamentals import fundamentals
 from src.nodes.news import news
 from src.nodes.report import report
+from src.nodes.save_report import save_report
 from src.nodes.supervisor import supervisor
 
 logger = logging.getLogger(__name__)
@@ -16,9 +17,19 @@ graph.add_node("supervisor", supervisor)
 graph.add_node("fundamentals", fundamentals)
 graph.add_node("news", news)
 graph.add_node("report", report)
+graph.add_node("save", save_report)
 
 graph.add_edge(START, "supervisor")
-graph.add_edge("report", END)
+graph.add_edge("save", END)
+
+
+def should_continue_report(state: AnalysisState) -> str:
+    if state["report"] and not state["error"]:
+        logger.info("Report: generated, continuing to save")
+        return "save"
+
+    logger.warning("Report: no report or error, ending")
+    return END
 
 
 def should_continue_after_supervisor(state: AnalysisState) -> str:
@@ -70,6 +81,16 @@ graph.add_conditional_edges(
     should_continue_after_news,
     {
         "report": "report",
+        END: END,
+    },
+)
+
+
+graph.add_conditional_edges(
+    "report",
+    should_continue_report,
+    {
+        "save": "save",
         END: END,
     },
 )
