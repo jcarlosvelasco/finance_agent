@@ -1,3 +1,5 @@
+import logging
+
 from langgraph.graph import END, START, StateGraph
 
 from src.graph.state import AnalysisState
@@ -5,6 +7,8 @@ from src.nodes.fundamentals import fundamentals
 from src.nodes.news import news
 from src.nodes.report import report
 from src.nodes.supervisor import supervisor
+
+logger = logging.getLogger(__name__)
 
 graph = StateGraph(AnalysisState)
 
@@ -18,23 +22,29 @@ graph.add_edge("report", END)
 
 
 def should_continue_after_supervisor(state: AnalysisState) -> str:
-    if state["valid_ticker"]:
+    if state["valid_ticker"] and not state["error"]:
+        logger.info("Supervisor: valid ticker, continuing to fundamentals")
         return "fundamentals"
 
+    logger.warning("Supervisor: invalid ticker or error, ending")
     return END
 
 
 def should_continue_after_fundamentals(state: AnalysisState) -> str:
-    if state["company_info"]:
+    if state["company_info"] and not state["error"]:
+        logger.info("Fundamentals: company info available, continuing to news")
         return "news"
 
+    logger.warning("Fundamentals: no company info or error, ending")
     return END
 
 
 def should_continue_after_news(state: AnalysisState) -> str:
-    if state.get("sentiment") and state.get("key_events"):
+    if state.get("sentiment") and state.get("key_events") and not state["error"]:
+        logger.info("News: sentiment and key events available, continuing to report")
         return "report"
 
+    logger.warning("News: no sentiment or key events or error, ending")
     return END
 
 

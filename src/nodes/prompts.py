@@ -6,7 +6,7 @@ Headlines:
 {headlines}
 
 Respond with JSON:
-{{"sentiment": "...", "key_events": ["...", "...", "..."]}}}"""
+{{"sentiment": "...", "key_events": ["...", "...", "..."]}}"""
 
 REPORT_PROMPT = """You are a financial analyst. Generate a comprehensive company report based on the following data:
 

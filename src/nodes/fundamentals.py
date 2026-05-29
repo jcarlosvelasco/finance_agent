@@ -1,3 +1,4 @@
+import logging
 import os
 
 from src.graph.state import AnalysisState, CompanyInfo
@@ -6,6 +7,7 @@ from src.tools.yfinance_tools import get_financials, get_stock_info
 
 provider = os.getenv("LLM_PROVIDER", "ollama")
 
+logger = logging.getLogger(__name__)
 
 tools = [get_stock_info, get_financials]
 llm = get_llm()
@@ -43,4 +45,5 @@ async def fundamentals(state: AnalysisState) -> AnalysisState:
             "company_info": company_info,
         }
     except Exception as e:
+        logger.error(f"\nError in fundamentals: {str(e)}")
         return {**state, "error": str(e)}

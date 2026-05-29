@@ -55,7 +55,7 @@ def get_financials(ticker: str) -> GetFinancialsResponse:
     """Get income statement and balance sheet summary."""
     stock = yf.Ticker(ticker)
     info = stock.info
-    logger.info(f"Financials for {ticker}: {info}")
+    logger.info(f"\nFinancials for {ticker}: {info}")
     response = GetFinancialsResponse(
         revenue_growth=info.get("revenueGrowth"),
         gross_margins=info.get("grossMargins"),

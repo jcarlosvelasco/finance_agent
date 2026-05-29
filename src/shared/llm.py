@@ -1,11 +1,18 @@
 import os
+from typing import Type, TypeVar
 
 from langchain_core.language_models import BaseChatModel
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage
 from langchain_ollama import ChatOllama
+from pydantic import BaseModel
 
 from src.settings import settings
+
+
+class SentimentResponse(BaseModel):
+    sentiment: str
+    key_events: list[str]
 
 
 def get_llm() -> BaseChatModel:
@@ -20,3 +27,11 @@ def get_llm() -> BaseChatModel:
             )
         )
     return ChatOllama(model=CHAT_MODEL, temperature=0.2, base_url=OLLAMA_BASE_URL)
+
+
+T = TypeVar("T", bound=BaseModel)
+
+
+def get_structured_llm(schema: Type[T]):
+    llm = get_llm()
+    return llm.with_structured_output(schema)
