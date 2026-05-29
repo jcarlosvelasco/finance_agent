@@ -2,6 +2,7 @@ import asyncio
 import logging
 import os
 
+from langfuse.client import StatefulSpanClient
 from src.graph.state import AnalysisState, CompanyInfo
 from src.langfuse import langfuse
 from src.shared.llm import get_llm
@@ -18,6 +19,8 @@ agent = llm.bind_tools(tools)
 
 async def fundamentals(state: AnalysisState) -> AnalysisState:
     trace = langfuse.trace(name="fundamentals_node")
+    stock_span: StatefulSpanClient | None = None
+    financials_span: StatefulSpanClient | None = None
 
     try:
         ticker = state["ticker"]
@@ -32,8 +35,6 @@ async def fundamentals(state: AnalysisState) -> AnalysisState:
 
         stock_span.end(output=stock_info)
         financials_span.end(output=financials)
-
-        langfuse.flush()
 
         company_info = CompanyInfo(
             name=stock_info.name,
@@ -61,5 +62,21 @@ async def fundamentals(state: AnalysisState) -> AnalysisState:
             "company_info": company_info,
         }
     except Exception as e:
+        trace.update(
+            metadata={
+                "error": str(e),
+                "status": "failed",
+                "ticker": state.get("ticker"),
+            }
+        )
+
+        try:
+            if stock_span is not None:
+                stock_span.end()
+            if financials_span is not None:
+                financials_span.end()
+        except Exception:
+            pass
+
         logger.error(f"\nError in fundamentals: {str(e)}")
         return {**state, "error": str(e)}

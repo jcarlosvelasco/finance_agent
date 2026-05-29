@@ -1,13 +1,16 @@
+from langfuse.client import StatefulSpanClient
 from src.graph.state import AnalysisState, CompanyInfo
 from src.langfuse import langfuse
 from src.nodes.prompts import REPORT_PROMPT
 from src.shared.llm import get_llm
 
 llm = get_llm()
-trace = langfuse.trace(name="reports_node")
 
 
 async def report(state: AnalysisState) -> AnalysisState:
+    span: StatefulSpanClient | None = None
+    trace = langfuse.trace(name="reports_node")
+
     try:
         company_info: CompanyInfo | None = state.get("company_info")
         if not company_info:
@@ -45,7 +48,6 @@ async def report(state: AnalysisState) -> AnalysisState:
         response = await llm.ainvoke(prompt)
 
         span.end(output=response.content)
-        langfuse.flush()
 
         content = response.content
         if isinstance(content, list):
@@ -58,4 +60,14 @@ async def report(state: AnalysisState) -> AnalysisState:
             "report": content,
         }
     except Exception as e:
+        trace.update(
+            metadata={
+                "error": str(e),
+                "status": "failed",
+                "ticker": state.get("ticker"),
+            }
+        )
+
+        if span is not None:
+            span.end(output={"error": str(e)})
         return {**state, "error": f"Report generation error: {str(e)}"}

@@ -6,6 +6,7 @@ import re
 from langchain_core.messages import HumanMessage
 from tavily import TavilyClient
 
+from langfuse.client import StatefulSpanClient
 from src.graph.state import AnalysisState
 from src.langfuse import langfuse
 from src.nodes.prompts import SENTIMENT_PROMPT
@@ -18,8 +19,6 @@ tavily = TavilyClient(api_key=tavily_api_key)
 logger = logging.getLogger(__name__)
 
 llm = get_llm()
-
-trace = langfuse.trace(name="news_node")
 
 
 def extract_json(text: str) -> dict:
@@ -39,6 +38,9 @@ def extract_json(text: str) -> dict:
 
 
 async def news(state: AnalysisState) -> AnalysisState:
+    trace = langfuse.trace(name="news_node")
+    span: StatefulSpanClient | None = None
+
     try:
         span = trace.span(
             name="tavily_search",
@@ -54,7 +56,6 @@ async def news(state: AnalysisState) -> AnalysisState:
         )
 
         span.end(output=results)
-        langfuse.flush()
 
         headlines = [r["title"] for r in results["results"]]
 
@@ -78,9 +79,6 @@ async def news(state: AnalysisState) -> AnalysisState:
         )
 
         span.end(output=response.content)
-        langfuse.flush()
-
-        logger.info(f"Raw LLM response: {response.content}")
 
         data = extract_json(response.content)
         analysis = SentimentResponse.model_validate(data)
@@ -91,6 +89,22 @@ async def news(state: AnalysisState) -> AnalysisState:
             "sentiment": analysis.sentiment,
             "key_events": analysis.key_events,
         }
+
     except Exception as e:
         logger.error(f"news node failed: {e}")
+
+        trace.update(
+            metadata={
+                "error": str(e),
+                "status": "failed",
+                "ticker": state.get("ticker"),
+            }
+        )
+
+        try:
+            if span is not None:
+                span.end(output={"error": str(e)})
+        except Exception:
+            pass
+
         return {**state, "error": str(e)}
