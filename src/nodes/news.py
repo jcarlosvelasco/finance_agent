@@ -22,7 +22,10 @@ llm = get_llm()
 
 
 def extract_json(text: str) -> dict:
-    """Extrae JSON de la respuesta aunque venga con texto alrededor."""
+    text = text.strip()
+
+    text = re.sub(r"```json|```", "", text).strip()
+
     try:
         return json.loads(text)
     except json.JSONDecodeError:
@@ -34,7 +37,7 @@ def extract_json(text: str) -> dict:
             return json.loads(match.group())
         except json.JSONDecodeError:
             pass
-    raise ValueError(f"No valid JSON found in response: {text[:200]}")
+    raise ValueError(f"No valid JSON found in response: {text}")
 
 
 async def news(state: AnalysisState) -> AnalysisState:
@@ -60,7 +63,7 @@ async def news(state: AnalysisState) -> AnalysisState:
         headlines = [r["title"] for r in results["results"]]
 
         span = trace.span(
-            name="llm_sentiment",
+            name="llm_sentiment_raw",
             input={
                 "company": state.get("company_name", state["ticker"]),
                 "headlines": "\n".join(headlines),
@@ -78,7 +81,15 @@ async def news(state: AnalysisState) -> AnalysisState:
             ]
         )
 
+        span.end(output=response.content)
+
+        span = trace.span(
+            name="llm_sentiment_parsed",
+            input={"data": response.content},
+        )
+
         data = extract_json(response.content)
+
         span.end(output=data)
 
         analysis = SentimentResponse.model_validate(data)
