@@ -3,6 +3,7 @@ from langgraph.graph import END, START, StateGraph
 from src.graph.state import AnalysisState
 from src.nodes.fundamentals import fundamentals
 from src.nodes.news import news
+from src.nodes.report import report
 from src.nodes.supervisor import supervisor
 
 graph = StateGraph(AnalysisState)
@@ -10,10 +11,10 @@ graph = StateGraph(AnalysisState)
 graph.add_node("supervisor", supervisor)
 graph.add_node("fundamentals", fundamentals)
 graph.add_node("news", news)
+graph.add_node("report", report)
 
 graph.add_edge(START, "supervisor")
-graph.add_edge("fundamentals", END)
-graph.add_edge("news", END)
+graph.add_edge("report", END)
 
 
 def should_continue_after_supervisor(state: AnalysisState) -> str:
@@ -30,12 +31,18 @@ def should_continue_after_fundamentals(state: AnalysisState) -> str:
     return END
 
 
+def should_continue_after_news(state: AnalysisState) -> str:
+    if state.get("sentiment") and state.get("key_events"):
+        return "report"
+
+    return END
+
+
 graph.add_conditional_edges(
     "supervisor",
     should_continue_after_supervisor,
     {
         "fundamentals": "fundamentals",
-        "news": "news",
     },
 )
 
@@ -44,6 +51,15 @@ graph.add_conditional_edges(
     should_continue_after_fundamentals,
     {
         "news": "news",
+        END: END,
+    },
+)
+
+graph.add_conditional_edges(
+    "news",
+    should_continue_after_news,
+    {
+        "report": "report",
         END: END,
     },
 )

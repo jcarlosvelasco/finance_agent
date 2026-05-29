@@ -34,3 +34,5 @@ class AnalysisState(TypedDict):
     news_items: List[dict] | None
     sentiment: str | None
     key_events: List[str] | None
+
+    report: str | None

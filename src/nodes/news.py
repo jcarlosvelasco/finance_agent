@@ -1,4 +1,5 @@
 import json
+import os
 
 from tavily import TavilyClient
 
@@ -6,7 +7,10 @@ from src.graph.state import AnalysisState
 from src.nodes.prompts import SENTIMENT_PROMPT
 from src.shared.llm import get_llm
 
-tavily = TavilyClient()
+tavily_api_key = os.getenv("TAVILY_API_KEY")
+
+
+tavily = TavilyClient(api_key=tavily_api_key)
 llm = get_llm()
 
 

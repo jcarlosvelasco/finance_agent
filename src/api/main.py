@@ -33,6 +33,7 @@ async def generate_report(req: GenerateReportRequest):
             "news_items": None,
             "sentiment": None,
             "key_events": None,
+            "report": None,
         }
     )
     print(result)
