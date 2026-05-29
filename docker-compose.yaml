@@ -49,7 +49,7 @@ services:
       - "8000:8000"
 
     volumes:
-      - reports_data:/app/src/data/reports
+      - reports_data:/backend/src/data/reports
 
     depends_on:
       - langfuse-server
