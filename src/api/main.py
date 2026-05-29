@@ -25,7 +25,15 @@ app = FastAPI(lifespan=lifespan)
 async def generate_report(req: GenerateReportRequest):
     app = graph.compile()
     result = await app.ainvoke(
-        {"ticker": req.ticker, "valid_ticker": False, "error": None}
+        {
+            "ticker": req.ticker,
+            "valid_ticker": False,
+            "error": None,
+            "company_info": None,
+            "news_items": None,
+            "sentiment": None,
+            "key_events": None,
+        }
     )
     print(result)
     return result
