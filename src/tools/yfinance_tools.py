@@ -1,3 +1,5 @@
+from typing import Optional
+
 import yfinance as yf
 from langchain_core.tools import tool
 from langgraph.graph.state import logging
@@ -14,7 +16,7 @@ class GetStockInfoResponse(BaseModel):
     eps: float
     fifty_two_week_high: float
     fifty_two_week_low: float
-    dividend_yield: float
+    dividend_yield: Optional[float] = None
     sector: str
     industry: str
 
@@ -40,14 +42,14 @@ def get_stock_info(ticker: str) -> GetStockInfoResponse:
 
 
 class GetFinancialsResponse(BaseModel):
-    revenue_growth: float
-    gross_margins: float
-    profit_margins: float
-    debt_to_equity: float
-    return_on_equity: float
-    free_cashflow: float
-    total_cash: float
-    total_debt: float
+    revenue_growth: Optional[float] = None
+    gross_margins: Optional[float] = None
+    profit_margins: Optional[float] = None
+    debt_to_equity: Optional[float] = None
+    return_on_equity: Optional[float] = None
+    free_cashflow: Optional[float] = None
+    total_cash: Optional[float] = None
+    total_debt: Optional[float] = None
 
 
 @tool
