@@ -88,7 +88,31 @@ async def news(state: AnalysisState) -> AnalysisState:
             input={"data": response.content},
         )
 
-        data = extract_json(response.content)
+        if isinstance(response.content, str):
+            data = extract_json(response.content)
+        elif isinstance(response.content, dict):
+            data = response.content
+        elif isinstance(response.content, list):
+            # Extrae el primer bloque de texto de la lista de contenido
+            text_block = next(
+                (
+                    item["text"] if isinstance(item, dict) else item
+                    for item in response.content
+                    if isinstance(item, dict)
+                    and item.get("type") == "text"
+                    or isinstance(item, str)
+                ),
+                None,
+            )
+            if text_block is None:
+                raise ValueError(
+                    f"No text content found in response: {response.content}"
+                )
+            data = extract_json(text_block)
+        else:
+            raise ValueError(
+                f"Unexpected response content type: {type(response.content)}"
+            )
 
         span.end(output=data)
 
