@@ -57,6 +57,5 @@ jobs:
 
       - name: Run tests
         run: uv run pytest tests/unit/ -v
-
-      env:
-         LLM_PROVIDER: mock
+        env:
+          LLM_PROVIDER: mock
