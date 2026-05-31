@@ -4,9 +4,9 @@ import os
 import re
 
 from langchain_core.messages import HumanMessage
+from langfuse.client import StatefulSpanClient
 from tavily import TavilyClient
 
-from langfuse.client import StatefulSpanClient
 from src.graph.state import AnalysisState
 from src.langfuse import langfuse
 from src.nodes.prompts import SENTIMENT_PROMPT
