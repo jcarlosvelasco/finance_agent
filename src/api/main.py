@@ -1,10 +1,12 @@
 import logging
 from contextlib import asynccontextmanager
+from typing import cast
 
 from fastapi import Depends, FastAPI
 
 from src.api.schemas.GenerateReportRequest import GenerateReportRequest
 from src.graph.graph import graph
+from src.graph.state import AnalysisState
 from src.nodes.save_report import load_cached_report
 
 logging.basicConfig(
@@ -33,8 +35,9 @@ async def generate_report(req: GenerateReportRequest = Depends()):
         logger.info(f"Cache hit for {ticker}")
         return {"success": True, "report": cached["report"]}
 
-    app = graph.compile()
-    result = await app.ainvoke(
+    compiled = graph.compile()
+    initial_state = cast(
+        AnalysisState,
         {
             "ticker": req.ticker,
             "valid_ticker": False,
@@ -44,8 +47,9 @@ async def generate_report(req: GenerateReportRequest = Depends()):
             "sentiment": None,
             "key_events": None,
             "report": None,
-        }
+        },
     )
+    result = await compiled.ainvoke(initial_state)
 
     if result["error"]:
         logger.error(f"Error generating report for {ticker}: {result['error']}")

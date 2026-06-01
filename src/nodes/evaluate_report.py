@@ -20,14 +20,19 @@ async def evaluate_report(state: AnalysisState) -> AnalysisState:
     if not report:
         return {**state, "evaluation": None}
 
-    company_info = state.get("company_info", {})
+    company_info = state.get("company_info")
+    if company_info is None:
+        company_info_dict: dict = {}
+    else:
+        company_info_dict = dict(company_info)
+
     key_events = state.get("key_events", [])
 
     prompt = JUDGE_PROMPT.format(
-        name=company_info.get("name", "N/A"),
+        name=company_info_dict.get("name", "N/A"),
         ticker=state.get("ticker", "N/A"),
-        price=company_info.get("price", 0),
-        market_cap=company_info.get("market_cap", 0),
+        price=company_info_dict.get("price", 0),
+        market_cap=company_info_dict.get("market_cap", 0),
         sentiment=state.get("sentiment", "N/A"),
         key_events=", ".join(key_events) if key_events else "No events",
         report=report,
