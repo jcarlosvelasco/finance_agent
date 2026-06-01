@@ -36,19 +36,24 @@ HTTP GET /generate_report?ticker=AAPL
                        ▼
               ┌─────────────────┐
               │     report      │  LLM generates 7-section report
-              └────────┬────────┘
-                       │ report
-                       ▼
-              ┌─────────────────┐
-              │      save       │  Caches JSON → src/data/reports/{TICKER}.json
-              └────────┬────────┘
-                       │
-                       ▼
-              ┌─────────────────┐
-              │   END / return  │
-              └─────────────────┘
+               └────────┬────────┘
+                        │ report
+                        ▼
+               ┌─────────────────┐
+               │      save       │  Caches JSON → src/data/reports/{TICKER}.json
+               └────────┬────────┘
+                        │
+                        ▼
+               ┌─────────────────┐
+               │    evaluate     │  LLM judge scores report (5 criteria)
+               └────────┬────────┘
+                        │
+                        ▼
+               ┌─────────────────┐
+               │   END / return  │
+               └─────────────────┘
 
-Every step is traced in Langfuse (latency · tokens · errors per node)
+Every step is traced in Langfuse (latency · tokens · errors per node). The evaluation node also sends quality scores (factual consistency, completeness, analytical depth, actionability, coherence) as Langfuse feedback scores.
 ```
 
 ---
@@ -69,6 +74,9 @@ Runs entirely on Apple Silicon at ~40 tokens/s with no API costs. MLX-optimized 
 
 **Sentiment parsing with structured output**
 The LLM returns JSON `{"sentiment": "...", "key_events": [...]}` rather than free text, making the result parseable and type-safe via Pydantic without function-calling support from the local model. Structured output is not working with the local model because it does not support it natively or because it is too small.
+
+**LLM-as-judge for report quality evaluation**
+After generation, a separate LLM call scores the report on 5 criteria (factual consistency, completeness, analytical depth, actionability, coherence). Scores are sent to Langfuse as feedback for tracking quality over time — no human reviewer needed for CI evaluation.
 
 **File-based caching with mtime expiry**
 Reports are cached as `{TICKER}.json` and invalidated by comparing file modification date to today — no cleanup script needed, no external cache service.
@@ -106,8 +114,9 @@ finance-agent/
 │   │   ├── fundamentals.py            Fetches stock info + financials in parallel
 │   │   ├── news.py                    Tavily search + LLM sentiment analysis
 │   │   ├── report.py                  Generates final report via LLM
+│   │   ├── evaluate_report.py         LLM judge scores report quality
 │   │   ├── save_report.py             Caches report to JSON + cache load logic
-│   │   └── prompts.py                 SENTIMENT_PROMPT + REPORT_PROMPT
+│   │   └── prompts.py                 SENTIMENT_PROMPT + REPORT_PROMPT + JUDGE_PROMPT
 │   ├── shared/
 │   │   └── llm.py                     LLM factory (ChatOllama or mock for CI)
 │   ├── tools/
@@ -236,6 +245,7 @@ See `.env.example` for the full list.
 
 ---
 
+
 ## License
 
-MIT
+Check [LICENSE.md](LICENSE.md)
