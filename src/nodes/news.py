@@ -93,7 +93,6 @@ async def news(state: AnalysisState) -> AnalysisState:
         elif isinstance(response.content, dict):
             data = response.content
         elif isinstance(response.content, list):
-            # Extrae el primer bloque de texto de la lista de contenido
             text_block = next(
                 (
                     item["text"] if isinstance(item, dict) else item

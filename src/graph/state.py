@@ -36,3 +36,5 @@ class AnalysisState(TypedDict):
     key_events: List[str] | None
 
     report: str | None
+
+    evaluation: dict | None

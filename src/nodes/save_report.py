@@ -31,15 +31,5 @@ def load_cached_report(ticker: str) -> dict | None:
 
 
 async def save_report(state: AnalysisState) -> AnalysisState:
-    path = get_cache_path(state["ticker"])
-    payload = {
-        "ticker": state["ticker"],
-        "company_info": state["company_info"],
-        "sentiment": state["sentiment"],
-        "key_events": state["key_events"],
-        "report": state["report"],
-        "generated_at": date.today().isoformat(),
-    }
-    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-    logger.info(f"Report saved to {path}")
+
     return state

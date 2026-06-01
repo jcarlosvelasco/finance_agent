@@ -47,3 +47,37 @@ Based on this data, provide a professional financial report that includes:
 7. Key Takeaways
 
 Provide actionable insights and clear analysis."""
+
+JUDGE_PROMPT = """You are an expert financial analyst evaluating the quality of a company report.
+
+ORIGINAL DATA PROVIDED:
+- Company: {name} ({ticker})
+- Price: ${price}, Market Cap: ${market_cap:.2e}
+- Sentiment: {sentiment}
+- Key Events: {key_events}
+
+GENERATED REPORT:
+{report}
+
+Evaluate this report on the following criteria (score 1-5 each):
+
+1. **factual_consistency**: Does the report accurately reflect the provided financial data?
+2. **completeness**: Does it cover all 7 required sections (Executive Summary, Overview, Financial Health, Valuation, Sentiment, Investment Perspective, Key Takeaways)?
+3. **analytical_depth**: Does it provide genuine insight beyond restating numbers?
+4. **actionability**: Are the investment insights clear and actionable?
+5. **coherence**: Is the report well-structured and logically consistent?
+
+Respond ONLY with a JSON object like:
+{{
+  "scores": {{
+    "factual_consistency": <1-5>,
+    "completeness": <1-5>,
+    "analytical_depth": <1-5>,
+    "actionability": <1-5>,
+    "coherence": <1-5>
+  }},
+  "overall_score": <1-5>,
+  "strengths": ["..."],
+  "weaknesses": ["..."],
+  "reasoning": "Brief overall justification"
+}}"""

@@ -3,6 +3,7 @@ import logging
 from langgraph.graph import END, START, StateGraph
 
 from src.graph.state import AnalysisState
+from src.nodes.evaluate_report import evaluate_report
 from src.nodes.fundamentals import fundamentals
 from src.nodes.news import news
 from src.nodes.report import report
@@ -18,12 +19,17 @@ graph.add_node("fundamentals", fundamentals)
 graph.add_node("news", news)
 graph.add_node("report", report)
 graph.add_node("save", save_report)
+graph.add_node("evaluate", evaluate_report)
 
 graph.add_edge(START, "supervisor")
-graph.add_edge("save", END)
+graph.add_edge("save", "evaluate")
+graph.add_edge("evaluate", END)
 
 
-def should_continue_report(state: AnalysisState) -> str:
+def should_continue_after_report(state: AnalysisState) -> str:
+    logger.info(
+        "Report: checking state: report=%s, error=%s", state["report"], state["error"]
+    )
     if state["report"] and not state["error"]:
         logger.info("Report: generated, continuing to save")
         return "save"
@@ -85,10 +91,9 @@ graph.add_conditional_edges(
     },
 )
 
-
 graph.add_conditional_edges(
     "report",
-    should_continue_report,
+    should_continue_after_report,
     {
         "save": "save",
         END: END,
