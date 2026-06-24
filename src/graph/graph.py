@@ -1,5 +1,6 @@
 import logging
 
+from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 
 from src.graph.state import AnalysisState
@@ -99,3 +100,6 @@ graph.add_conditional_edges(
         END: END,
     },
 )
+
+checkpointer = MemorySaver()
+compiled_app = graph.compile(checkpointer=checkpointer)

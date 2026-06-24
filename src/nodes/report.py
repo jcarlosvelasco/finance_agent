@@ -1,6 +1,7 @@
 import logging
 
 from langfuse.client import StatefulSpanClient
+from langgraph.types import interrupt
 
 from src.graph.state import AnalysisState, CompanyInfo
 from src.langfuse import langfuse
@@ -18,15 +19,54 @@ def safe_float(value, default=0.0) -> float:
         return default
 
 
+def _format_for_review(state: AnalysisState) -> dict:
+    ci: CompanyInfo | dict = state.get("company_info") or {}
+    return {
+        "ticker": state["ticker"],
+        "company": {
+            "name": ci.get("name", "N/A"),
+            "price": ci.get("price"),
+            "market_cap": ci.get("market_cap"),
+            "sector": ci.get("sector"),
+            "pe_ratio": ci.get("pe_ratio"),
+            "eps": ci.get("eps"),
+            "dividend_yield": ci.get("dividend_yield"),
+            "52w_high": ci.get("fifty_two_week_high"),
+            "52w_low": ci.get("fifty_two_week_low"),
+            "revenue_growth": ci.get("revenue_growth"),
+            "gross_margins": ci.get("gross_margins"),
+            "profit_margins": ci.get("profit_margins"),
+            "debt_to_equity": ci.get("debt_to_equity"),
+            "return_on_equity": ci.get("return_on_equity"),
+        },
+        "sentiment": state.get("sentiment", "N/A"),
+        "key_events": state.get("key_events", []),
+        "news_count": len(state.get("news_items") or []),
+    }
+
+
 async def report(state: AnalysisState) -> AnalysisState:
+    company_info: CompanyInfo | None = state.get("company_info")
+    if not company_info:
+        return {**state, "error": "No company information available for report"}
+
+    review_data = _format_for_review(state)
+    human_input = interrupt(review_data)
+
+    if not human_input.get("approved"):
+        fb = human_input.get("feedback", "")
+        return {
+            **state,
+            "report": None,
+            "error": f"Report rejected by user: {fb}" if fb else "Report rejected by user",
+            "human_feedback": fb or None,
+            "human_approved": False,
+        }
+
     span: StatefulSpanClient | None = None
     trace = langfuse.trace(name="reports_node")
 
     try:
-        company_info: CompanyInfo | None = state.get("company_info")
-        if not company_info:
-            return {**state, "error": "No company information available for report"}
-
         key_events = state.get("key_events", [])
         key_events_str = ", ".join(key_events) if key_events else "No events"
 
@@ -67,7 +107,7 @@ async def report(state: AnalysisState) -> AnalysisState:
                 item if isinstance(item, str) else str(item) for item in content
             )
 
-        return {**state, "report": content}
+        return {**state, "report": content, "human_approved": True}
 
     except Exception as e:
         trace.update(

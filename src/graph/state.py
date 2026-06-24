@@ -38,3 +38,6 @@ class AnalysisState(TypedDict):
     report: str | None
 
     evaluation: dict | None
+
+    human_feedback: str | None
+    human_approved: bool | None
