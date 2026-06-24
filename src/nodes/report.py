@@ -3,7 +3,7 @@ import logging
 from langfuse.client import StatefulSpanClient
 from langgraph.types import interrupt
 
-from src.graph.state import AnalysisState, CompanyInfo
+from src.graph.state import AnalysisState
 from src.langfuse import langfuse
 from src.nodes.prompts import REPORT_PROMPT
 from src.shared.llm import get_llm
@@ -20,35 +20,35 @@ def safe_float(value, default=0.0) -> float:
 
 
 def _format_for_review(state: AnalysisState) -> dict:
-    ci: CompanyInfo | dict = state.get("company_info") or {}
+    ci = state.company_info
     return {
-        "ticker": state["ticker"],
+        "ticker": state.ticker,
         "company": {
-            "name": ci.get("name", "N/A"),
-            "price": ci.get("price"),
-            "market_cap": ci.get("market_cap"),
-            "sector": ci.get("sector"),
-            "pe_ratio": ci.get("pe_ratio"),
-            "eps": ci.get("eps"),
-            "dividend_yield": ci.get("dividend_yield"),
-            "52w_high": ci.get("fifty_two_week_high"),
-            "52w_low": ci.get("fifty_two_week_low"),
-            "revenue_growth": ci.get("revenue_growth"),
-            "gross_margins": ci.get("gross_margins"),
-            "profit_margins": ci.get("profit_margins"),
-            "debt_to_equity": ci.get("debt_to_equity"),
-            "return_on_equity": ci.get("return_on_equity"),
+            "name": ci.name if ci else "N/A",
+            "price": ci.price if ci else None,
+            "market_cap": ci.market_cap if ci else None,
+            "sector": ci.sector if ci else None,
+            "pe_ratio": ci.pe_ratio if ci else None,
+            "eps": ci.eps if ci else None,
+            "dividend_yield": ci.dividend_yield if ci else None,
+            "52w_high": ci.fifty_two_week_high if ci else None,
+            "52w_low": ci.fifty_two_week_low if ci else None,
+            "revenue_growth": ci.revenue_growth if ci else None,
+            "gross_margins": ci.gross_margins if ci else None,
+            "profit_margins": ci.profit_margins if ci else None,
+            "debt_to_equity": ci.debt_to_equity if ci else None,
+            "return_on_equity": ci.return_on_equity if ci else None,
         },
-        "sentiment": state.get("sentiment", "N/A"),
-        "key_events": state.get("key_events", []),
-        "news_count": len(state.get("news_items") or []),
+        "sentiment": state.sentiment or "N/A",
+        "key_events": state.key_events or [],
+        "news_count": len(state.news_items or []),
     }
 
 
-async def report(state: AnalysisState) -> AnalysisState:
-    company_info: CompanyInfo | None = state.get("company_info")
+async def report(state: AnalysisState) -> dict:
+    company_info = state.company_info
     if not company_info:
-        return {**state, "error": "No company information available for report"}
+        return {"error": "No company information available for report"}
 
     review_data = _format_for_review(state)
     human_input = interrupt(review_data)
@@ -56,9 +56,10 @@ async def report(state: AnalysisState) -> AnalysisState:
     if not human_input.get("approved"):
         fb = human_input.get("feedback", "")
         return {
-            **state,
             "report": None,
-            "error": f"Report rejected by user: {fb}" if fb else "Report rejected by user",
+            "error": f"Report rejected by user: {fb}"
+            if fb
+            else "Report rejected by user",
             "human_feedback": fb or None,
             "human_approved": False,
         }
@@ -67,30 +68,30 @@ async def report(state: AnalysisState) -> AnalysisState:
     trace = langfuse.trace(name="reports_node")
 
     try:
-        key_events = state.get("key_events", [])
+        key_events = state.key_events or []
         key_events_str = ", ".join(key_events) if key_events else "No events"
 
         prompt = REPORT_PROMPT.format(
-            name=company_info.get("name") or "N/A",
-            ticker=state["ticker"],
-            price=safe_float(company_info.get("price")),
-            market_cap=safe_float(company_info.get("market_cap")),
-            sector=company_info.get("sector") or "N/A",
-            industry=company_info.get("industry") or "N/A",
-            pe_ratio=safe_float(company_info.get("pe_ratio")),
-            eps=safe_float(company_info.get("eps")),
-            fifty_two_week_high=safe_float(company_info.get("fifty_two_week_high")),
-            fifty_two_week_low=safe_float(company_info.get("fifty_two_week_low")),
-            dividend_yield=safe_float(company_info.get("dividend_yield")),
-            revenue_growth=safe_float(company_info.get("revenue_growth")),
-            gross_margins=safe_float(company_info.get("gross_margins")),
-            profit_margins=safe_float(company_info.get("profit_margins")),
-            return_on_equity=safe_float(company_info.get("return_on_equity")),
-            debt_to_equity=safe_float(company_info.get("debt_to_equity")),
-            free_cashflow=safe_float(company_info.get("free_cashflow")),
-            total_cash=safe_float(company_info.get("total_cash")),
-            total_debt=safe_float(company_info.get("total_debt")),
-            sentiment=state.get("sentiment", "N/A"),
+            name=company_info.name or "N/A",
+            ticker=state.ticker,
+            price=safe_float(company_info.price),
+            market_cap=safe_float(company_info.market_cap),
+            sector=company_info.sector or "N/A",
+            industry=company_info.industry or "N/A",
+            pe_ratio=safe_float(company_info.pe_ratio),
+            eps=safe_float(company_info.eps),
+            fifty_two_week_high=safe_float(company_info.fifty_two_week_high),
+            fifty_two_week_low=safe_float(company_info.fifty_two_week_low),
+            dividend_yield=safe_float(company_info.dividend_yield),
+            revenue_growth=safe_float(company_info.revenue_growth),
+            gross_margins=safe_float(company_info.gross_margins),
+            profit_margins=safe_float(company_info.profit_margins),
+            return_on_equity=safe_float(company_info.return_on_equity),
+            debt_to_equity=safe_float(company_info.debt_to_equity),
+            free_cashflow=safe_float(company_info.free_cashflow),
+            total_cash=safe_float(company_info.total_cash),
+            total_debt=safe_float(company_info.total_debt),
+            sentiment=state.sentiment or "N/A",
             key_events=key_events_str,
         )
 
@@ -107,16 +108,16 @@ async def report(state: AnalysisState) -> AnalysisState:
                 item if isinstance(item, str) else str(item) for item in content
             )
 
-        return {**state, "report": content, "human_approved": True}
+        return {"report": content, "human_approved": True}
 
     except Exception as e:
         trace.update(
             metadata={
                 "error": str(e),
                 "status": "failed",
-                "ticker": state.get("ticker"),
+                "ticker": state.ticker,
             }
         )
         if span is not None:
             span.end(output={"error": str(e)})
-        return {**state, "error": f"Report generation error: {str(e)}"}
+        return {"error": f"Report generation error: {str(e)}"}

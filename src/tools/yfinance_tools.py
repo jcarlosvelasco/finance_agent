@@ -8,6 +8,21 @@ from pydantic import BaseModel
 logger = logging.getLogger(__name__)
 
 
+def _safe_str(value: object, default: str = "") -> str:
+    if value is None:
+        return default
+    return str(value)
+
+
+def _safe_float(value: object, default: float = 0.0) -> float:
+    if value is None:
+        return default
+    try:
+        return float(str(value))
+    except (TypeError, ValueError):
+        return default
+
+
 class GetStockInfoResponse(BaseModel):
     name: str
     price: float
@@ -28,16 +43,16 @@ def get_stock_info(ticker: str) -> GetStockInfoResponse:
     info = stock.info
     logger.info(f"Stock info for {ticker}: {info}")
     return GetStockInfoResponse(
-        name=info.get("longName"),
-        price=info.get("currentPrice"),
-        market_cap=info.get("marketCap"),
-        pe_ratio=info.get("trailingPE"),
-        eps=info.get("trailingEps"),
-        fifty_two_week_high=info.get("fiftyTwoWeekHigh"),
-        fifty_two_week_low=info.get("fiftyTwoWeekLow"),
-        dividend_yield=info.get("dividendYield"),
-        sector=info.get("sector"),
-        industry=info.get("industry"),
+        name=_safe_str(info.get("longName")),
+        price=_safe_float(info.get("currentPrice")),
+        market_cap=_safe_float(info.get("marketCap")),
+        pe_ratio=_safe_float(info.get("trailingPE")),
+        eps=_safe_float(info.get("trailingEps")),
+        fifty_two_week_high=_safe_float(info.get("fiftyTwoWeekHigh")),
+        fifty_two_week_low=_safe_float(info.get("fiftyTwoWeekLow")),
+        dividend_yield=_safe_float(info.get("dividendYield")),
+        sector=_safe_str(info.get("sector")),
+        industry=_safe_str(info.get("industry")),
     )
 
 

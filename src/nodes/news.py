@@ -40,7 +40,7 @@ def extract_json(text: str) -> dict:
     raise ValueError(f"No valid JSON found in response: {text}")
 
 
-async def news(state: AnalysisState) -> AnalysisState:
+async def news(state: AnalysisState) -> dict:
     trace = langfuse.trace(name="news_node")
     span: StatefulSpanClient | None = None
 
@@ -48,12 +48,12 @@ async def news(state: AnalysisState) -> AnalysisState:
         span = trace.span(
             name="tavily_search",
             input={
-                "query": f"{state['ticker']} {state.get('company_name', '')} stock news"
+                "query": f"{state.ticker} stock news"
             },
         )
 
         results = tavily.search(
-            query=f"{state['ticker']} {state.get('company_name', '')} stock news",
+            query=f"{state.ticker} stock news",
             max_results=8,
             topic="news",
         )
@@ -65,7 +65,7 @@ async def news(state: AnalysisState) -> AnalysisState:
         span = trace.span(
             name="llm_sentiment_raw",
             input={
-                "company": state.get("company_name", state["ticker"]),
+                "company": state.ticker,
                 "headlines": "\n".join(headlines),
             },
         )
@@ -74,7 +74,7 @@ async def news(state: AnalysisState) -> AnalysisState:
             [
                 HumanMessage(
                     content=SENTIMENT_PROMPT.format(
-                        company=state.get("company_name", state["ticker"]),
+                        company=state.ticker,
                         headlines="\n".join(headlines),
                     )
                 )
@@ -118,7 +118,6 @@ async def news(state: AnalysisState) -> AnalysisState:
         analysis = SentimentResponse.model_validate(data)
 
         return {
-            **state,
             "news_items": results["results"],
             "sentiment": analysis.sentiment,
             "key_events": analysis.key_events,
@@ -131,7 +130,7 @@ async def news(state: AnalysisState) -> AnalysisState:
             metadata={
                 "error": str(e),
                 "status": "failed",
-                "ticker": state.get("ticker"),
+                "ticker": state.ticker,
             }
         )
 
@@ -141,4 +140,4 @@ async def news(state: AnalysisState) -> AnalysisState:
         except Exception:
             pass
 
-        return {**state, "error": str(e)}
+        return {"error": str(e)}

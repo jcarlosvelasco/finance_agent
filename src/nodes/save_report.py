@@ -30,10 +30,10 @@ def load_cached_report(ticker: str) -> dict | None:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-async def save_report(state: AnalysisState) -> AnalysisState:
+async def save_report(state: AnalysisState) -> dict:
     try:
-        ticker = state.get("ticker")
-        report = state.get("report")
+        ticker = state.ticker
+        report = state.report
         if ticker and report:
             path = get_cache_path(ticker)
             path.write_text(
@@ -44,4 +44,4 @@ async def save_report(state: AnalysisState) -> AnalysisState:
     except Exception as e:
         logger.error("Failed to save report: %s", e)
 
-    return state
+    return {}

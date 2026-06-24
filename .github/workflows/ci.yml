@@ -39,10 +39,10 @@ jobs:
           cache-suffix: typecheck
 
       - name: Install dependencies
-        run: uv sync --group dev
+        run: uv sync --locked --all-extras --dev
 
-      - name: Type check
-        run: uv run mypy src/
+      - name: ty
+        run: uv run ty check
 
   test:
     runs-on: ubuntu-latest

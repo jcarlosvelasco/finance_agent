@@ -1,7 +1,5 @@
 import logging
 from contextlib import asynccontextmanager
-from typing import cast
-
 from fastapi import Depends, FastAPI
 from langgraph.types import Command
 
@@ -38,21 +36,12 @@ async def generate_report(req: GenerateReportRequest = Depends()):
         return {"success": True, "report": cached["report"]}
 
     thread_id = f"report_{ticker}"
-    initial_state = cast(
-        AnalysisState,
-        {
-            "ticker": req.ticker,
-            "valid_ticker": False,
-            "error": None,
-            "company_info": None,
-            "news_items": None,
-            "sentiment": None,
-            "key_events": None,
-            "report": None,
-            "evaluation": None,
-            "human_feedback": None,
-            "human_approved": None,
-        },
+    initial_state = AnalysisState(
+        ticker=req.ticker,
+    )
+    result = await compiled_app.ainvoke(
+        initial_state,
+        config={"configurable": {"thread_id": thread_id}},
     )
     result = await compiled_app.ainvoke(
         initial_state,

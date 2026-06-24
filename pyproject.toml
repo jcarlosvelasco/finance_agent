@@ -15,15 +15,14 @@ dependencies = [
     "yfinance>=1.4.0",
 ]
 
+[tool.ty.analysis]
+allowed-unresolved-imports = ["langfuse.client"]
+
 [dependency-groups]
 dev = [
-    "mypy>=1.0.0",
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
     "ruff>=0.6.0",
     "pytest-asyncio>=0.24.0",
+    "ty>=0.0.53",
 ]
-
-[tool.mypy]
-explicit_package_bases = true
-ignore_missing_imports = true

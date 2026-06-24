@@ -3,6 +3,7 @@ import logging
 import os
 
 from langfuse.client import StatefulSpanClient
+
 from src.graph.state import AnalysisState, CompanyInfo
 from src.langfuse import langfuse
 from src.shared.llm import get_llm
@@ -17,13 +18,13 @@ llm = get_llm()
 agent = llm.bind_tools(tools)
 
 
-async def fundamentals(state: AnalysisState) -> AnalysisState:
+async def fundamentals(state: AnalysisState) -> dict:
     trace = langfuse.trace(name="fundamentals_node")
     stock_span: StatefulSpanClient | None = None
     financials_span: StatefulSpanClient | None = None
 
     try:
-        ticker = state["ticker"]
+        ticker = state.ticker
 
         stock_span = trace.span(name="get_stock_info", input={"ticker": ticker})
         financials_span = trace.span(name="get_financials", input={"ticker": ticker})
@@ -57,16 +58,13 @@ async def fundamentals(state: AnalysisState) -> AnalysisState:
             total_debt=financials.total_debt,
         )
 
-        return {
-            **state,
-            "company_info": company_info,
-        }
+        return {"company_info": company_info}
     except Exception as e:
         trace.update(
             metadata={
                 "error": str(e),
                 "status": "failed",
-                "ticker": state.get("ticker"),
+                "ticker": state.ticker,
             }
         )
 
@@ -79,4 +77,4 @@ async def fundamentals(state: AnalysisState) -> AnalysisState:
             pass
 
         logger.error(f"\nError in fundamentals: {str(e)}")
-        return {**state, "error": str(e)}
+        return {"error": str(e)}

@@ -11,29 +11,26 @@ llm = get_llm()
 logger = logging.getLogger(__name__)
 
 
-async def evaluate_report(state: AnalysisState) -> AnalysisState:
+async def evaluate_report(state: AnalysisState) -> dict:
     logger.info("Evaluating report...")
 
     trace = langfuse.trace(name="evaluate_report_node")
 
-    report = state.get("report")
+    report = state.report
     if not report:
-        return {**state, "evaluation": None}
+        return {"evaluation": None}
 
-    company_info = state.get("company_info")
-    if company_info is None:
-        company_info_dict: dict = {}
-    else:
-        company_info_dict = dict(company_info)
+    ci = state.company_info
+    company_info_dict = ci.model_dump() if ci else {}
 
-    key_events = state.get("key_events", [])
+    key_events = state.key_events or []
 
     prompt = JUDGE_PROMPT.format(
         name=company_info_dict.get("name", "N/A"),
-        ticker=state.get("ticker", "N/A"),
+        ticker=state.ticker or "N/A",
         price=company_info_dict.get("price", 0),
         market_cap=company_info_dict.get("market_cap", 0),
-        sentiment=state.get("sentiment", "N/A"),
+        sentiment=state.sentiment or "N/A",
         key_events=", ".join(key_events) if key_events else "No events",
         report=report,
     )
@@ -67,8 +64,8 @@ async def evaluate_report(state: AnalysisState) -> AnalysisState:
                 comment=evaluation.get("reasoning", ""),
             )
 
-        return {**state, "evaluation": evaluation}
+        return {"evaluation": evaluation}
 
     except Exception as e:
         span.end(output={"error": str(e)})
-        return {**state, "evaluation": None, "error": f"Evaluation error: {str(e)}"}
+        return {"evaluation": None, "error": f"Evaluation error: {str(e)}"}

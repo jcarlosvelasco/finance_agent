@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 graph = StateGraph(AnalysisState)
 
+
 graph.add_node("supervisor", supervisor)
 graph.add_node("fundamentals", fundamentals)
 graph.add_node("news", news)
@@ -29,9 +30,9 @@ graph.add_edge("evaluate", END)
 
 def should_continue_after_report(state: AnalysisState) -> str:
     logger.info(
-        "Report: checking state: report=%s, error=%s", state["report"], state["error"]
+        "Report: checking state: report=%s, error=%s", state.report, state.error
     )
-    if state["report"] and not state["error"]:
+    if state.report and not state.error:
         logger.info("Report: generated, continuing to save")
         return "save"
 
@@ -40,7 +41,7 @@ def should_continue_after_report(state: AnalysisState) -> str:
 
 
 def should_continue_after_supervisor(state: AnalysisState) -> str:
-    if state["valid_ticker"] and not state["error"]:
+    if state.valid_ticker and not state.error:
         logger.info("Supervisor: valid ticker, continuing to fundamentals")
         return "fundamentals"
 
@@ -49,7 +50,7 @@ def should_continue_after_supervisor(state: AnalysisState) -> str:
 
 
 def should_continue_after_fundamentals(state: AnalysisState) -> str:
-    if state["company_info"] and not state["error"]:
+    if state.company_info and not state.error:
         logger.info("Fundamentals: company info available, continuing to news")
         return "news"
 
@@ -58,7 +59,7 @@ def should_continue_after_fundamentals(state: AnalysisState) -> str:
 
 
 def should_continue_after_news(state: AnalysisState) -> str:
-    if state.get("sentiment") and state.get("key_events") and not state["error"]:
+    if state.sentiment and state.key_events and not state.error:
         logger.info("News: sentiment and key events available, continuing to report")
         return "report"
 

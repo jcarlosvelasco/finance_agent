@@ -3,8 +3,8 @@ import yfinance as yf
 from src.graph.state import AnalysisState
 
 
-def supervisor(state: AnalysisState) -> AnalysisState:
-    ticker = state["ticker"]
+def supervisor(state: AnalysisState) -> dict:
+    ticker = state.ticker
 
     try:
         stock = yf.Ticker(ticker)
@@ -12,15 +12,10 @@ def supervisor(state: AnalysisState) -> AnalysisState:
 
         exists = info is not None and info.get("symbol") is not None
 
-        state["valid_ticker"] = exists
-
         if not exists:
-            state["error"] = f"Ticker '{ticker}' does not exist"
-        else:
-            state["error"] = None
+            return {"valid_ticker": exists, "error": f"Ticker '{ticker}' does not exist"}
+
+        return {"valid_ticker": exists, "error": None}
 
     except Exception as e:
-        state["valid_ticker"] = False
-        state["error"] = str(e)
-
-    return state
+        return {"valid_ticker": False, "error": str(e)}
