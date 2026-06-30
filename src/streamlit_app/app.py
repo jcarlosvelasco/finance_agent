@@ -18,16 +18,7 @@ ticker = st.text_input(
     value=st.session_state.get("ticker", ""),
 ).upper()
 
-col1, col2 = st.columns([1, 5])
-with col1:
-    generate = st.button("Generate report", type="primary", use_container_width=True)
-with col2:
-    new_report = st.button("New report", use_container_width=True)
-
-if new_report:
-    for key in ("thread_id", "review_data", "report", "error_msg"):
-        st.session_state[key] = None
-    st.rerun()
+generate = st.button("Generate report", type="primary")
 
 if generate:
     if not ticker.strip():
@@ -52,9 +43,7 @@ if generate:
                 elif data.get("success"):
                     st.session_state["report"] = data["report"]
                 else:
-                    st.session_state["error_msg"] = data.get(
-                        "error", "Unknown error"
-                    )
+                    st.session_state["error_msg"] = data.get("error", "Unknown error")
             except httpx.RequestError as e:
                 st.session_state["error_msg"] = f"Connection error: {e}"
             except Exception as e:
@@ -123,9 +112,7 @@ if st.session_state["review_data"]:
                 if data.get("success"):
                     st.session_state["report"] = data["report"]
                 else:
-                    st.session_state["error_msg"] = data.get(
-                        "error", "Unknown error"
-                    )
+                    st.session_state["error_msg"] = data.get("error", "Unknown error")
                 st.session_state["review_data"] = None
                 st.rerun()
             except httpx.RequestError as e:
@@ -147,9 +134,7 @@ if st.session_state["review_data"]:
                 )
                 resp.raise_for_status()
                 data = resp.json()
-                st.session_state["error_msg"] = data.get(
-                    "error", "Report rejected"
-                )
+                st.session_state["error_msg"] = data.get("error", "Report rejected")
                 st.session_state["review_data"] = None
                 st.rerun()
             except httpx.RequestError as e:

@@ -1,4 +1,5 @@
 import logging
+from datetime import date
 
 from langfuse.client import StatefulSpanClient
 from langgraph.types import interrupt
@@ -72,6 +73,7 @@ async def report(state: AnalysisState) -> dict:
         key_events_str = ", ".join(key_events) if key_events else "No events"
 
         prompt = REPORT_PROMPT.format(
+            current_date=date.today().strftime("%B %d, %Y"),
             name=company_info.name or "N/A",
             ticker=state.ticker,
             price=safe_float(company_info.price),

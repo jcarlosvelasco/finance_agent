@@ -6,7 +6,9 @@ Headlines:
 Respond ONLY with this exact JSON, no other text:
 {{"sentiment": "positive|negative|neutral|mixed", "key_events": ["event1", "event2", "event3"]}}"""
 
-REPORT_PROMPT = """You are a financial analyst. Generate a comprehensive company report based on the following data:
+REPORT_PROMPT = """You are a financial analyst. Generate a comprehensive company report based on the following data.
+
+Report Date: {current_date}
 
 COMPANY INFORMATION:
 - Name: {name}
